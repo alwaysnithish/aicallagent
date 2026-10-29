@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Pickup — AI Receptionist for Any Business</title>
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#f4f7f8;--sf:#fff;--ink:#12202b;--mut:#5d6f7c;--ln:#d9e2e7;--ac:#0b7a6e;--acs:#dff3ef;--wn:#b45309;--wns:#fdf0dc;--er:#b42318;--ers:#fde8e6;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media(prefers-color-scheme:dark){:root:not([data-theme=light]){--bg:#0e171d;--sf:#16232b;--ink:#e6eef2;--mut:#93a6b2;--ln:#26373f;--ac:#3fc4b2;--acs:#133a36;--wn:#f0a64a;--wns:#3b2a10;--er:#ff8a7d;--ers:#40201c;color-scheme:dark}}
+:root[data-theme=dark]{--bg:#0e171d;--sf:#16232b;--ink:#e6eef2;--mut:#93a6b2;--ln:#26373f;--ac:#3fc4b2;--acs:#133a36;--wn:#f0a64a;--wns:#3b2a10;--er:#ff8a7d;--ers:#40201c;color-scheme:dark}
+*{box-sizing:border-box}html{scroll-padding-top:env(safe-area-inset-top,0px)}
+body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.5 "Instrument Sans",system-ui,sans-serif}
+header{display:flex;flex-wrap:wrap;gap:12px;align-items:center;justify-content:space-between;padding:14px 20px;border-bottom:1px solid var(--ln);background:var(--sf)}
+.logo{font-weight:700;font-size:20px;letter-spacing:-.02em}.logo i{font-style:normal;color:var(--ac)}
+nav{display:flex;gap:4px;overflow-x:auto;padding:8px 20px;border-bottom:1px solid var(--ln);background:var(--sf)}
+nav button{border:0;background:none;color:var(--mut);padding:8px 14px;border-radius:8px;font:inherit;font-weight:500;cursor:pointer;white-space:nowrap}
+nav button.on{background:var(--acs);color:var(--ac)}
+main{max-width:1000px;margin:0 auto;padding:20px}
+h2{font-size:22px;margin:0 0 4px;letter-spacing:-.01em}p.s{color:var(--mut);margin:0 0 16px}
+.card{background:var(--sf);border:1px solid var(--ln);border-radius:12px;padding:16px;margin-bottom:14px}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px}
+.big{font-size:34px;font-weight:700;letter-spacing:-.03em;line-height:1}.lbl{color:var(--mut);font-size:13px;margin-top:4px}
+button.b,select,input,textarea{font:inherit;color:var(--ink);background:var(--sf);border:1px solid var(--ln);border-radius:8px;padding:8px 10px}
+button.b{cursor:pointer;font-weight:600}button.p{background:var(--ac);border-color:var(--ac);color:#fff}
+:root:not([data-theme=light]) button.p{color:#06231f}
+button:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible{outline:2px solid var(--ac);outline-offset:2px}
+input,textarea,select{width:100%}label{display:block;font-size:13px;color:var(--mut);margin:10px 0 4px}
+.row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}.row>*{flex:0 0 auto}.row input{flex:1 1 160px;width:auto}
+.tag{display:inline-block;font-size:12px;font-weight:600;padding:2px 8px;border-radius:99px}
+.t-ok{background:var(--acs);color:var(--ac)}.t-wn{background:var(--wns);color:var(--wn)}.t-er{background:var(--ers);color:var(--er)}
+.fact{border-top:1px solid var(--ln);padding:12px 0}.fact:first-child{border-top:0}
+.tw{overflow-x:auto}table{border-collapse:collapse;width:100%;min-width:560px}th,td{text-align:left;padding:8px;border-bottom:1px solid var(--ln);font-size:14px;vertical-align:top}th{color:var(--mut);font-weight:500}
+.chat{height:340px;overflow-y:auto;display:flex;flex-direction:column;gap:8px;padding:4px}
+.m{max-width:80%;padding:8px 12px;border-radius:12px}.m.a{background:var(--acs);align-self:flex-start}.m.u{background:var(--bg);border:1px solid var(--ln);align-self:flex-end}
+.m small{display:block;color:var(--mut);margin-top:2px}
+.bar{height:8px;background:var(--ln);border-radius:9px;overflow:hidden}.bar i{display:block;height:100%;background:var(--ac)}
+.empty{color:var(--mut);padding:16px 0}
+.two{display:grid;grid-template-columns:1.4fr 1fr;gap:14px}@media(max-width:760px){.two{grid-template-columns:1fr}}
+</style></head><body>
+<header><div class="logo">pick<i>up</i></div>
+<div class="row"><label style="margin:0">Business</label><select id="tsel" style="width:auto"></select><button class="b" id="newt">New business</button></div></header>
+<nav id="nav"></nav><main id="main"></main>
+<script>
+const $=s=>document.querySelector(s),esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const uid=()=>Math.random().toString(36).slice(2,9);
+const mk=(name,cat,facts)=>({name,cat,persona:'Asha',greeting:`Hello, thanks for calling ${name}. How can I help?`,lang:'English',handoff:'+91 98480 00000',hours:'Mon–Sat, 9:00–19:00',version:1,limit:300,facts:facts.map(f=>({id:uid(),q:f[0],a:f[1],hi:f[2],st:f[3]||'approved'})),leads:[],calls:[],gaps:[],tasks:[]});
+let S={cur:'t1',tenants:{
+t1:mk('Glow Salon','Appointment business',[['haircut price cost fee','A women\'s haircut starts at ₹600 and a men\'s haircut at ₹300.',1],['opening hours timing open','We are open Monday to Saturday, 9 AM to 7 PM. Closed on Sundays.',0],['location address where','We are on 12 MG Road, near the metro station, Hyderabad.',0],['bridal makeup package price','Bridal packages start at ₹15,000. Final price depends on the trial.',1,'pending']]),
+t2:mk('Sharma Dental Clinic','Appointment business',[['consultation fee price','The first consultation is ₹500, adjustable against treatment.',1],['root canal treatment cost','Root canal pricing depends on the tooth; staff will share a quote after an exam.',1,'pending'],['timing hours open','The clinic is open 10 AM to 8 PM, Monday to Saturday.',0],['emergency pain','For severe pain, please ask for a staff member and we will arrange a same-day slot.',0]])}};
+try{const x=localStorage.getItem('pickup1');if(x)S=JSON.parse(x)}catch(e){}
+const save=()=>{try{localStorage.setItem('pickup1',JSON.stringify(S))}catch(e){}};
+const T=()=>S.tenants[S.cur];let tab='Overview',sess=null;
+const tabs=['Overview','Knowledge','Receptionist','Test call','Leads','Calls','Usage'];
+function chrome(){$('#tsel').innerHTML=Object.entries(S.tenants).map(([k,t])=>`<option value="${k}"${k==S.cur?' selected':''}>${esc(t.name)}</option>`).join('');
+$('#nav').innerHTML=tabs.map(t=>`<button class="${t==tab?'on':''}" data-t="${t}">${t}</button>`).join('')}
+$('#tsel').onchange=e=>{S.cur=e.target.value;sess=null;save();render()};
+$('#newt').onclick=()=>{const n=prompt('Business name');if(!n||!n.trim())return;const id='t'+uid();S.tenants[id]=mk(n.trim().slice(0,60),'Custom',[]);S.cur=id;sess=null;tab='Knowledge';save();render()};
+$('#nav').onclick=e=>{const t=e.target.dataset.t;if(t){tab=t;render()}};
+const used=t=>t.calls.reduce((a,c)=>a+c.sec,0)/60;
+function render(){chrome();const t=T(),m=$('#main');({Overview,Knowledge,Receptionist,TestCall,Leads,Calls,Usage})[tab=='Test call'?'TestCall':tab](t,m)}
+function Overview(t,m){const ap=t.facts.filter(f=>f.st=='approved').length,pe=t.facts.filter(f=>f.st=='pending').length;
+const steps=[['Add knowledge',t.facts.length>0],['Approve high-impact facts',t.facts.some(f=>f.hi&&f.st=='approved')&&!t.facts.some(f=>f.hi&&f.st=='pending')],['Customize receptionist',t.version>1||t.greeting.length>0],['Run a test call',t.calls.length>0]];
+m.innerHTML=`<h2>${esc(t.name)}</h2><p class="s">Everything here belongs to this business only. Switch business to see a separate workspace.</p>
+<div class="grid"><div class="card"><div class="big">${t.calls.length}</div><div class="lbl">Calls handled</div></div><div class="card"><div class="big">${t.leads.length}</div><div class="lbl">Leads captured</div></div><div class="card"><div class="big">${ap}</div><div class="lbl">Approved facts${pe?` · ${pe} awaiting review`:''}</div></div><div class="card"><div class="big">${t.gaps.length}</div><div class="lbl">Unanswered questions</div></div></div>
+<div class="two"><div class="card"><b>Setup checklist</b>${steps.map(s=>`<div class="fact">${s[1]?'<span class="tag t-ok">Done</span>':'<span class="tag t-wn">To do</span>'} ${s[0]}</div>`).join('')}</div>
+<div class="card"><b>Knowledge gaps</b>${t.gaps.length?t.gaps.slice(-5).reverse().map(g=>`<div class="fact">“${esc(g)}”</div>`).join(''):'<div class="empty">No gaps yet. Questions the receptionist could not confirm appear here so you can add the answer.</div>'}</div></div>
+<div class="card"><b>Callback tasks</b>${t.tasks.length?t.tasks.slice(-5).reverse().map(x=>`<div class="fact">${esc(x)}</div>`).join(''):'<div class="empty">No tasks yet.</div>'}</div>`}
+function Knowledge(t,m){m.innerHTML=`<h2>Knowledge base</h2><p class="s">The receptionist only answers from approved facts. Prices, dates and policies need your approval first.</p>
+<div class="card"><b>Add a fact</b><label>Keywords callers might use</label><input id="fq" placeholder="e.g. facial price cost"><label>Answer the receptionist will give</label><textarea id="fa" rows="2"></textarea>
+<div class="row" style="margin-top:10px"><label style="margin:0"><input type="checkbox" id="fh" style="width:auto"> Contains price, date or policy</label><button class="b p" id="fadd">Add fact</button></div></div>
+<div class="card">${t.facts.length?t.facts.map(f=>`<div class="fact"><div class="row"><span class="tag ${f.st=='approved'?'t-ok':f.st=='pending'?'t-wn':'t-er'}">${f.st=='approved'?'Approved':f.st=='pending'?'Needs review':'Rejected'}</span>${f.hi?'<span class="tag t-wn">High impact</span>':''}</div><div style="margin:6px 0"><b>${esc(f.q)}</b><br>${esc(f.a)}</div><div class="row"><button class="b" data-a="approved" data-i="${f.id}">Approve</button><button class="b" data-a="rejected" data-i="${f.id}">Reject</button><button class="b" data-a="del" data-i="${f.id}">Delete</button></div></div>`).join(''):'<div class="empty">No facts yet. Add your first FAQ above.</div>'}</div>`;
+$('#fadd').onclick=()=>{const q=$('#fq').value.trim(),a=$('#fa').value.trim();if(!q||!a)return;t.facts.push({id:uid(),q,a,hi:$('#fh').checked,st:$('#fh').checked?'pending':'approved'});save();render()};
+m.querySelectorAll('[data-a]').forEach(b=>b.onclick=()=>{const i=b.dataset.i;if(b.dataset.a=='del')t.facts=t.facts.filter(f=>f.id!=i);else t.facts.find(f=>f.id==i).st=b.dataset.a;save();render()})}
+function Receptionist(t,m){const f=(id,l,v)=>`<label>${l}</label><input id="${id}" value="${esc(v)}">`;
+m.innerHTML=`<h2>Receptionist</h2><p class="s">Published version ${t.version}. Changes go live when you publish.</p><div class="card">${f('rn','Receptionist name',t.persona)}${f('rg','Greeting',t.greeting)}${f('rh','Business hours',t.hours)}${f('rf','Human handoff number',t.handoff)}
+<label>Language</label><select id="rl">${['English','Hindi','Telugu'].map(l=>`<option${l==t.lang?' selected':''}>${l}</option>`).join('')}</select>
+<div class="row" style="margin-top:12px"><button class="b p" id="rp">Publish new version</button></div></div>
+<div class="card"><b>Safety rules (always on)</b><div class="fact">Never invents fees, dates or policies.</div><div class="fact">Says it cannot confirm when no approved answer exists, then offers a staff callback.</div><div class="fact">Never shares another business's data.</div></div>`;
+$('#rp').onclick=()=>{Object.assign(t,{persona:$('#rn').value,greeting:$('#rg').value,hours:$('#rh').value,handoff:$('#rf').value,lang:$('#rl').value});t.version++;save();render()}}
+const STOP=new Set('the a an is are what how do you your i me my to of for and or in on at it can please tell about much does have there with this that'.split(' '));
+const toks=s=>s.toLowerCase().replace(/[^a-z0-9₹ ]/g,' ').split(/\s+/).filter(w=>w&&!STOP.has(w));
+function retrieve(t,q){const qt=toks(q);if(!qt.length)return null;let best=null,bs=0;
+for(const f of t.facts){if(f.st!='approved')continue;const ft=new Set(toks(f.q+' '+f.a));const hit=qt.filter(w=>ft.has(w)||[...ft].some(x=>x.length>3&&w.length>3&&(x.startsWith(w.slice(0,4)))));const s=hit.length/qt.length;if(s>bs){bs=s;best=f}}
+return bs>=.34?best:null}
+function TestCall(t,m){if(!sess)sess={msgs:[{r:'a',x:t.greeting}],step:null,lead:{},outcome:'Answered',start:Date.now(),asked:0,notes:[]};
+m.innerHTML=`<h2>Test call</h2><p class="s">Talk to ${esc(t.persona)} as a caller would. Answers come only from this business's approved facts.</p>
+<div class="card"><div class="chat" id="chat">${sess.msgs.map(g=>`<div class="m ${g.r}">${esc(g.x)}${g.src?`<small>Source: ${esc(g.src)}</small>`:''}</div>`).join('')}</div>
+<div class="row" style="margin-top:10px"><input id="ci" placeholder="Type what the caller says" autocomplete="off"><button class="b p" id="cs">Send</button><button class="b" id="ce">End call</button></div>
+<div class="row" style="margin-top:8px"><button class="b" data-q="What is the price?">Ask about price</button><button class="b" data-q="When are you open?">Ask about hours</button><button class="b" data-q="I want to book an appointment">Book appointment</button><button class="b" data-q="Can I talk to a person?">Ask for a human</button></div></div>`;
+const ch=$('#chat');ch.scrollTop=ch.scrollHeight;
+const send=x=>{x=x.trim();if(!x)return;sess.msgs.push({r:'u',x});sess.msgs.push(reply(t,x));save();render();$('#ci').focus()};
+$('#cs').onclick=()=>send($('#ci').value);$('#ci').onkeydown=e=>{if(e.key=='Enter')send(e.target.value)};
+m.querySelectorAll('[data-q]').forEach(b=>b.onclick=()=>send(b.dataset.q));
+$('#ce').onclick=()=>{if(sess.msgs.length<2){sess=null;render();return}
+const sec=Math.max(20,(sess.msgs.length)*9);t.calls.push({id:uid(),at:new Date().toLocaleString(),sec,outcome:sess.outcome,sum:sess.notes.join(' ')||'Caller did not ask anything.'});sess=null;save();tab='Calls';render()}}
+function reply(t,x){const s=sess;
+if(s.step=='name'){s.lead.name=x.slice(0,60);s.step='phone';return{r:'a',x:`Thanks ${s.lead.name}. What phone number can we reach you on?`}}
+if(s.step=='phone'){const d=x.replace(/\D/g,'').slice(-10);if(d.length!=10)return{r:'a',x:'I did not catch a 10-digit number. Could you say it again?'};
+s.step=null;const dup=t.leads.find(l=>l.phone==d);if(!dup)t.leads.push({id:uid(),name:s.lead.name,phone:d,interest:s.lead.interest||'General enquiry',stage:'New',at:new Date().toLocaleDateString()});
+s.outcome='Lead captured';s.notes.push(`Captured lead ${s.lead.name} (${d}).`);return{r:'a',x:`Done. A team member from ${t.name} will call you back soon.`}}
+if(/human|person|staff|manager|someone|owner/i.test(x)){s.outcome='Human handoff';t.tasks.push(`Priority callback requested during a test call (${new Date().toLocaleTimeString()}).`);s.notes.push('Caller asked for a human; callback task created.');return{r:'a',x:`Of course. I am arranging a callback and you can also reach us on ${t.handoff}.`}}
+if(/book|appointment|callback|call me|quote|visit|slot/i.test(x)){s.step='name';s.lead.interest=x.slice(0,80);s.notes.push('Caller wanted a booking or callback.');return{r:'a',x:'Happy to help. Live calendar booking is not connected for this business, so I will take a callback request. What is your name?'}}
+const f=retrieve(t,x);if(f){s.notes.push(`Answered: ${f.q.split(' ').slice(0,3).join(' ')}.`);return{r:'a',x:f.a,src:'Approved fact'}}
+if(!t.gaps.includes(x))t.gaps.push(x);s.outcome='Unanswered question';s.notes.push(`Could not confirm: "${x.slice(0,60)}".`);
+return{r:'a',x:'I cannot confirm that right now. I can arrange a callback from our staff. Would you like that?'}}
+function Leads(t,m){m.innerHTML=`<h2>Leads</h2><p class="s">Captured from calls. Repeat callers update the same lead.</p><div class="card tw">${t.leads.length?`<table><tr><th>Name</th><th>Phone</th><th>Interest</th><th>Date</th><th>Stage</th></tr>${t.leads.map(l=>`<tr><td>${esc(l.name)}</td><td>${esc(l.phone)}</td><td>${esc(l.interest)}</td><td>${esc(l.at)}</td><td><select data-l="${l.id}">${['New','Contacted','Booked','Won','Lost'].map(s=>`<option${s==l.stage?' selected':''}>${s}</option>`).join('')}</select></td></tr>`).join('')}</table>`:'<div class="empty">No leads yet. Run a test call and ask to book an appointment.</div>'}</div>`;
+m.querySelectorAll('[data-l]').forEach(s=>s.onchange=()=>{t.leads.find(l=>l.id==s.dataset.l).stage=s.value;save()})}
+function Calls(t,m){m.innerHTML=`<h2>Calls</h2><p class="s">Summary and outcome for every call.</p><div class="card tw">${t.calls.length?`<table><tr><th>Time</th><th>Length</th><th>Outcome</th><th>Summary</th></tr>${t.calls.slice().reverse().map(c=>`<tr><td>${esc(c.at)}</td><td>${Math.round(c.sec)}s</td><td><span class="tag ${c.outcome=='Lead captured'?'t-ok':c.outcome=='Answered'?'t-ok':'t-wn'}">${esc(c.outcome)}</span></td><td>${esc(c.sum)}</td></tr>`).join('')}</table>`:'<div class="empty">No calls yet. End a test call to save it here.</div>'}</div>`}
+function Usage(t,m){const u=used(t),p=Math.min(100,u/t.limit*100),cost=u*6;
+m.innerHTML=`<h2>Usage</h2><p class="s">Plan limit protects against runaway call costs.</p><div class="card"><div class="row" style="justify-content:space-between"><b>${u.toFixed(1)} of ${t.limit} minutes</b><span class="lbl">Estimated provider cost ₹${cost.toFixed(0)} at ₹6/min (assumption)</span></div><div class="bar" style="margin:10px 0"><i style="width:${p}%"></i></div>${p>80?'<span class="tag t-wn">Approaching limit</span>':'<span class="tag t-ok">Within plan</span>'}
+<label>Monthly minute limit</label><input id="ul" type="number" min="10" value="${t.limit}"><div class="row" style="margin-top:10px"><button class="b p" id="us">Save limit</button><button class="b" id="rs">Reset this business's demo data</button></div></div>`;
+$('#us').onclick=()=>{t.limit=Math.max(10,+$('#ul').value||300);save();render()};
+$('#rs').onclick=()=>{if(confirm('Clear calls, leads and tasks for this business?')){t.calls=[];t.leads=[];t.gaps=[];t.tasks=[];save();render()}}}
+render();
+</script></body></html>
